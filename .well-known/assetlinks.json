@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.kanawish.glia",
+    "sha256_cert_fingerprints":
+    ["DD:F0:A8:2F:DD:A4:90:3F:C6:74:CF:F8:3D:D7:B7:0F:35:17:BB:61:50:23:54:A7:1D:BD:98:47:0C:DC:5F:CB"]
+  }
+}]
