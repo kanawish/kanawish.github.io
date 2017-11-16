@@ -25,4 +25,4 @@ github_username:  kanawish
 markdown: kramdown
 permalink: pretty
 
-theme: jekyll-theme-minimal
+theme: minima
