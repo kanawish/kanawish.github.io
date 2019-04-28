@@ -1,25 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Etienne Caron</title>
-    <link>https://kanawish.com/</link>
-    <description>Recent content on Etienne Caron</description>
+    <title>Posts on Etienne Caron</title>
+    <link>https://kanawish.com/posts/</link>
+    <description>Recent content in Posts on Etienne Caron</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 25 Apr 2019 08:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Feb 2012 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="https://kanawish.com/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://kanawish.com/posts/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>About</title>
-      <link>https://kanawish.com/about/</link>
-      <pubDate>Thu, 25 Apr 2019 08:00:00 +0000</pubDate>
-      
-      <guid>https://kanawish.com/about/</guid>
-      <description>This is my personal tech blog. Opinions and content are my own.
-Blog stack Uses Hugo to generate content, Hyde for theming, netlify for deployment and hosting.</description>
-    </item>
     
     <item>
       <title>Example content</title>
