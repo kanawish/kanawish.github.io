@@ -8,7 +8,7 @@
   </url>
   
   <url>
-    <loc>https://kanawish.com/posts/example-content/</loc>
+    <loc>https://kanawish.com/example-content/</loc>
     <lastmod>2012-02-07T00:00:00+00:00</lastmod>
   </url>
   
@@ -20,12 +20,6 @@
   <url>
     <loc>https://kanawish.com/</loc>
     <lastmod>2019-04-25T08:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://kanawish.com/posts/</loc>
-    <lastmod>2012-02-07T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
