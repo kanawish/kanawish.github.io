@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="//gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.49" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>DIY Reactive Model Store using RxJava &middot; Etienne Caron</title>
+
+  
+  <link type="text/css" rel="stylesheet" href="https://kanawish.com/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="https://kanawish.com/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="https://kanawish.com/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="https://kanawish.com/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  <link href="" rel="alternate" type="application/rss+xml" title="Etienne Caron" />
+
+  
+</head>
+
+  <body class=" ">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="https://kanawish.com/"><h1>Etienne Caron</h1></a>
+      <p class="lead">
+       Developer blog 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="https://kanawish.com/">Home</a> </li>
+        <li><a href="/about/"> About </a></li>
+      </ul>
+    </nav>
+
+    <p>&copy; 2019. All rights reserved. </p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>DIY Reactive Model Store using RxJava</h1>
+  <time datetime=2019-04-28T11:00:00Z class="post-date">Sun, Apr 28, 2019</time>
+  
+
+<p>In the last few years on Android, we&rsquo;ve seen an explosion of architectures based on the idea of a unidirectional data flow.</p>
+
+<p>I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&rsquo;s state. By keeping your state immutable, and processing changes from within a single thread, you can make sure race conditions won&rsquo;t become a concern.</p>
+
+<p>The great thing is, you can apply that idea anywhere. Be it MVVM, MVI, MVP, if you deal with shared Model State, the Model Store pattern can become handy.</p>
+
+<h2 id="working-with-immutable-state">Working with Immutable State</h2>
+
+<p>So, what does our Model Store do, exactly? It keeps a copy of an immutable state. Let&rsquo;s imagine an upvoting application, where we keep track of votes from our users. In Kotlin, our state class would look something like this:</p>
+
+<pre><code class="language-kotlin">data class UpvoteModel(val ❤️:Int, val 👍:Int)
+</code></pre>
+
+<p>Then each time a vote is recorded, we want to update the stored state. Given that our <code>data class</code> is immutable, we use the copy operator to update our count:</p>
+
+<pre><code class="language-kotlin">val initialState = UpvoteModel(❤️=0, 👍=0)
+val newState = initialState.copy(👍=initialState.👍+1)
+</code></pre>
+
+<h2 id="reducers">Reducers</h2>
+
+<p>So the general idea with immutable state is, you build your new state by creating an updated copy of the old state. Let&rsquo;s formalize this:</p>
+
+<pre><code class="language-kotlin">// Reducer takes an old (immutable) state and builds a new state from it. 
+interface Reducer&lt;S&gt; {
+    fun reduce(oldState: S): S
+}
+</code></pre>
+
+<p>So, each reducer being processed represents one &ldquo;action&rdquo; on the user side. If this was an Android app, how do we need it to behave?</p>
+
+<ul>
+<li>When the app starts, <code>UpvoteModel(❤️=0, 👍=0)</code></li>
+<li>When a button is pressed, we increment ❤️ or 👍 by 1</li>
+</ul>
+
+<p>Our reducer implementations:</p>
+
+<pre><code class="language-kotlin">    class AddHeart :Reducer&lt;UpvoteModel&gt; {
+        override fun reduce(oldState: UpvoteModel) =
+            oldState.copy(❤️ = oldState.❤️ + 1)
+    }
+
+    class AddThumbsUp :Intent&lt;UpvoteModel&gt; {
+        override fun reduce(oldState: UpvoteModel) =
+            oldState.copy(👍 = 👍.thumbs + 1)
+    }
+</code></pre>
+
+<h2 id="model-store">Model Store</h2>
+
+<p>Going back to the idea of the Model Store. We&rsquo;ll want our store to process <code>Reducer</code> instances on the input side. And we&rsquo;ll need some reactive stream on the output side. Using RxJava, the following interface works nicely:</p>
+
+<pre><code class="language-kotlin">interface ModelStore&lt;S&gt; {
+    fun process(reducer: Reducer&lt;S&gt;)
+    fun modelState(): Observable&lt;S&gt;
+}
+</code></pre>
+
+<p>So, if we combine all of this together, the end goal is as follows:</p>
+
+<p><img src="img/001-model-store.gif" alt="Model Store in Action" /></p>
+
+<p>How do we implement this Model Store? Let&rsquo;s start with the <code>process(r)</code> function. The first thing we need to do is take that function call, and turn it into an <code>Observable&lt;Reducer&gt;</code>. The RxRelay library is ideal here.</p>
+
+<pre><code class="language-kotlin">val reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
+fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
+</code></pre>
+
+<p>Once an Observer subscribes to a <code>PublishRelay</code>, it will emit all the following observed items to the subscriber. That said, we&rsquo;ll only be using this <code>reducers</code> Relay internally:</p>
+
+<pre><code class="language-kotlin">private val store = reducers
+    .observeOn(AndroidSchedulers.mainThread())
+    .scan(startingState) { oldState, reducer -&gt; reducer.reduce(oldState) }
+</code></pre>
+
+<p>WIP</p>
+
+</div>
+
+
+    </main>
+
+    
+  </body>
+</html>

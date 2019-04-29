@@ -3,6 +3,11 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://kanawish.com/posts/001-rxjava-modelstore/</loc>
+    <lastmod>2019-04-28T11:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://kanawish.com/about/</loc>
     <lastmod>2019-04-25T08:00:00+00:00</lastmod>
   </url>
@@ -14,7 +19,13 @@
   
   <url>
     <loc>https://kanawish.com/</loc>
-    <lastmod>2019-04-25T08:00:00+00:00</lastmod>
+    <lastmod>2019-04-28T11:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://kanawish.com/posts/</loc>
+    <lastmod>2019-04-28T11:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
