@@ -61,7 +61,11 @@
 
 <h2 id="working-with-immutable-state">Working with Immutable State</h2>
 
-<p>So, what does our Model Store do, exactly? It keeps a copy of an immutable state. Let&rsquo;s imagine an upvoting application, where we keep track of votes from our users. In Kotlin, our state class would look something like this:</p>
+<p>So, what does our Model Store do, exactly? It keeps a copy of an immutable state. Let&rsquo;s imagine an upvoting application, where we keep track of votes from our users.</p>
+
+<p><img src="001-upvote-app.png" alt="Upvoting App" /></p>
+
+<p>In Kotlin, our state class would look something like this:</p>
 
 <pre><code class="language-kotlin">data class UpvoteModel(val hearts:Int, val thumbsUp:Int)
 </code></pre>
