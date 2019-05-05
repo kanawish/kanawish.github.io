@@ -6,7 +6,7 @@
     <description>Recent content in Posts on Etienne Caron</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 28 Apr 2019 11:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 05 May 2019 15:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://kanawish.com/posts/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,11 +14,12 @@
     <item>
       <title>DIY Reactive Model Store using RxJava</title>
       <link>https://kanawish.com/posts/001-rxjava-modelstore/</link>
-      <pubDate>Sun, 28 Apr 2019 11:00:00 +0000</pubDate>
+      <pubDate>Sun, 05 May 2019 15:00:00 +0000</pubDate>
       
       <guid>https://kanawish.com/posts/001-rxjava-modelstore/</guid>
       <description>In the last few years on Android, we&amp;rsquo;ve seen an explosion of architectures based on the idea of a unidirectional data flow.
-I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&amp;rsquo;s state. By keeping your state immutable, and processing changes from within a single thread, you can make sure race conditions won&amp;rsquo;t become a concern.</description>
+I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&amp;rsquo;s state.
+Working with Immutable State So, what does our Model Store do, exactly? It keeps a copy of an immutable state.</description>
     </item>
     
   </channel>

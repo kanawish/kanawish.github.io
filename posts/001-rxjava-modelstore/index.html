@@ -52,14 +52,12 @@
     <main class="content container">
     <div class="post">
   <h1>DIY Reactive Model Store using RxJava</h1>
-  <time datetime=2019-04-28T11:00:00Z class="post-date">Sun, Apr 28, 2019</time>
+  <time datetime=2019-05-05T15:00:00Z class="post-date">Sun, May 5, 2019</time>
   
 
 <p>In the last few years on Android, we&rsquo;ve seen an explosion of architectures based on the idea of a unidirectional data flow.</p>
 
-<p>I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&rsquo;s state. By keeping your state immutable, and processing changes from within a single thread, you can make sure race conditions won&rsquo;t become a concern.</p>
-
-<p>The great thing is, you can apply that idea anywhere. Be it MVVM, MVI, MVP, if you deal with shared Model State, the Model Store pattern can become handy.</p>
+<p>I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&rsquo;s state.</p>
 
 <h2 id="working-with-immutable-state">Working with Immutable State</h2>
 
@@ -131,7 +129,58 @@ fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
     .scan(startingState) { oldState, reducer -&gt; reducer.reduce(oldState) }
 </code></pre>
 
+<h2 id="single-source-of-truth">Single Source of Truth</h2>
+
+<p>We are missing one important piece of the puzzle. We need our model store to be a shared, single source of truth. To get the behaviour we&rsquo;re looking for, we need to turn our store into a <code>ConnectableObservable</code>.</p>
+
 <p><img src="/img/001-replay-connect.png" alt="" /></p>
+
+<p>The <code>replay(1)</code> operator gives us this ConnectableObservable. This insures that subscribers will get the current state of our ModelStore on subscription. Then, we use <code>connect()</code> on initialization, priming our ModelStore immediately.</p>
+
+<pre><code class="language-kotlin">open class RxModelStore&lt;S&gt;(startingState: S) : ModelStore&lt;S&gt; {
+
+    /** 
+     * Gives us an Observable&lt;Reducer&gt; sourced from process(reducer)
+     */
+    private val reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
+
+    /** 
+     * Our shared single source of truth.
+     */
+    private val store: ConnectableObservable&lt;S&gt; = intents
+        .observeOn(AndroidSchedulers.mainThread())
+        .scan(startingState) { oldState, reducer -&gt; reducer(oldState) }
+        .replay(1)
+        .apply { connect() }
+
+    /**
+     * Model will receive intents to be processed via this function.
+     */
+    override fun process(reducer: Reducer&lt;S&gt;) = reducers.accept(reducer)
+
+    /**
+     * Observable stream of states.
+     */
+    override fun modelState(): Observable&lt;S&gt; = store
+}
+</code></pre>
+
+<h2 id="subscribing-to-a-modelstore">Subscribing to a ModelStore</h2>
+
+<p>The next step here is to subscribe to a model store. If we go back to our upvoting app example, our subscription looks something like this:</p>
+
+<pre><code class="language-kotlin">store.modelState().subscribe { model -&gt;
+    textView.text = resources.getString( R.string.upvotes, model.❤️, model.👍 )
+}
+</code></pre>
+
+<h2 id="key-benefits">Key Benefits</h2>
+
+<p>By keeping your state immutable, and processing changes from within a single thread, you can make sure race conditions won&rsquo;t become a concern.</p>
+
+<p>You can apply this idea anywhere. Be it MVVM, MVI, MVP, if you deal with shared Model State, the Model Store pattern can become handy.</p>
+
+<p>If you&rsquo;re interested in learning more, check out <a href="https://github.com/kanawish/upvote">Upvote MVI Sample App on Github</a>, from my <a href="https://speakerdeck.com/kanawish/19-mvi-droidcon-boston-slides">Simple MVI Architecture</a> talk at <a href="https://www.droidcon-boston.com">Droicon Boston 2019</a>.</p>
 
 </div>
 
