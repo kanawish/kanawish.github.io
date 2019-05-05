@@ -63,13 +63,13 @@
 
 <p>So, what does our Model Store do, exactly? It keeps a copy of an immutable state. Let&rsquo;s imagine an upvoting application, where we keep track of votes from our users. In Kotlin, our state class would look something like this:</p>
 
-<pre><code class="language-kotlin">data class UpvoteModel(val ❤️:Int, val 👍:Int)
+<pre><code class="language-kotlin">data class UpvoteModel(val hearts:Int, val thumbsUp:Int)
 </code></pre>
 
 <p>Then each time a vote is recorded, we want to update the stored state. Given that our <code>data class</code> is immutable, we use the copy operator to update our count:</p>
 
-<pre><code class="language-kotlin">val initialState = UpvoteModel(❤️=0, 👍=0)
-val newState = initialState.copy(👍=initialState.👍+1)
+<pre><code class="language-kotlin">val initialState = UpvoteModel(hearts=0, thumbsUp=0)
+val newState = initialState.copy(thumbsUp=initialState.thumbsUp+1)
 </code></pre>
 
 <h2 id="reducers">Reducers</h2>
@@ -85,7 +85,7 @@ interface Reducer&lt;S&gt; {
 <p>So, each reducer being processed represents one &ldquo;action&rdquo; on the user side. If this was an Android app, how do we need it to behave?</p>
 
 <ul>
-<li>When the app starts, <code>UpvoteModel(❤️=0, 👍=0)</code></li>
+<li>When the app starts, <code>UpvoteModel(hearts=0, thumbsUp=0)</code></li>
 <li>When a button is pressed, we increment ❤️ or 👍 by 1</li>
 </ul>
 
@@ -93,12 +93,12 @@ interface Reducer&lt;S&gt; {
 
 <pre><code class="language-kotlin">    class AddHeart :Reducer&lt;UpvoteModel&gt; {
         override fun reduce(oldState: UpvoteModel) =
-            oldState.copy(❤️ = oldState.❤️ + 1)
+            oldState.copy(hearts = oldState.hearts + 1)
     }
 
     class AddThumbsUp :Intent&lt;UpvoteModel&gt; {
         override fun reduce(oldState: UpvoteModel) =
-            oldState.copy(👍 = 👍.thumbs + 1)
+            oldState.copy(thumbsUp = oldState.thumbsUp + 1)
     }
 </code></pre>
 
@@ -170,7 +170,8 @@ fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
 <p>The next step here is to subscribe to a model store. If we go back to our upvoting app example, our subscription looks something like this:</p>
 
 <pre><code class="language-kotlin">store.modelState().subscribe { model -&gt;
-    textView.text = resources.getString( R.string.upvotes, model.❤️, model.👍 )
+    textView.text = 
+        resources.getString( R.string.upvotes, model.hearts, model.thumbsUp )
 }
 </code></pre>
 
