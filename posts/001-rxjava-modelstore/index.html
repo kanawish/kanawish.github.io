@@ -116,7 +116,7 @@ interface Reducer&lt;S&gt; {
 
 <p>So, if we combine all of this together, the end goal is as follows:</p>
 
-<p><img src="img/001-model-store.gif" alt="Model Store in Action" /></p>
+<p><img src="/img/001-model-store.gif" alt="Model Store in Action" /></p>
 
 <p>How do we implement this Model Store? Let&rsquo;s start with the <code>process(r)</code> function. The first thing we need to do is take that function call, and turn it into an <code>Observable&lt;Reducer&gt;</code>. The RxRelay library is ideal here.</p>
 
@@ -124,14 +124,14 @@ interface Reducer&lt;S&gt; {
 fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
 </code></pre>
 
-<p>Once an Observer subscribes to a <code>PublishRelay</code>, it will emit all the following observed items to the subscriber. That said, we&rsquo;ll only be using this <code>reducers</code> Relay internally:</p>
+<p>Once an Observer subscribes to a <code>PublishRelay</code>, it will emit all the following observed items to the subscriber. That said, we&rsquo;ll only be using this <code>reducers:PublishRelay</code> internally:</p>
 
 <pre><code class="language-kotlin">private val store = reducers
     .observeOn(AndroidSchedulers.mainThread())
     .scan(startingState) { oldState, reducer -&gt; reducer.reduce(oldState) }
 </code></pre>
 
-<p>WIP</p>
+<p><img src="/img/001-replay-connect.png" alt="" /></p>
 
 </div>
 
