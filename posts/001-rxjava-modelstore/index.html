@@ -57,84 +57,56 @@
 
 <p>In the last few years on Android, we&rsquo;ve seen an explosion of architectures based on the idea of a unidirectional data flow.</p>
 
-<p>I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your appication&rsquo;s state.</p>
+<p>I was first exposed to this idea while working on an MVI-based app using RxJava. One of the key concepts in MVI is to cleanly manage changes to your application state. The Model Store pattern is key in achieving this.</p>
 
 <h2 id="working-with-immutable-state">Working with Immutable State</h2>
 
-<p>So, what does a Model Store do, exactly? It keeps a copy of an immutable state.</p>
+<p>So, what does a Model Store do, exactly? Basically, it stores <em>immutable</em> state.</p>
 
-<p>Let&rsquo;s imagine an upvoting application, where we keep track of votes from our users.</p>
+<p>That&rsquo;s a pretty abstract concept. To make this idea more concrete, let&rsquo;s imagine we&rsquo;re building an upvoting application. This app will keep track of upvotes from our users.</p>
 
 <p><img src="/img/001-upvote-app.png" width="200px"/></p>
 
-<p>In Kotlin, our state class would look something like this:</p>
-
-<pre><code class="language-kotlin">data class UpvoteModel(val hearts:Int, val thumbsUp:Int)
-</code></pre>
-
-<p>Then each time a vote is recorded, we want to update the stored state. Given that our <code>data class</code> is immutable, we use the copy operator to update our count:</p>
-
-<pre><code class="language-kotlin">val initialState = UpvoteModel(hearts=0, thumbsUp=0)
-val newState = initialState.copy(thumbsUp=initialState.thumbsUp+1)
-</code></pre>
-
+<p>In Kotlin, our app-state could look something like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">data</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">UpvoteModel</span>(<span style="color:#66d9ef">val</span> hearts:Int, <span style="color:#66d9ef">val</span> thumbsUp:Int)</code></pre></div>
+<p>Each time a vote is recorded, we&rsquo;ll want to update the stored state. Given that a <code>data class</code> is immutable, we use the <code>copy()</code> function to update our count:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">val</span> initialState = UpvoteModel(hearts=<span style="color:#ae81ff">0</span>, thumbsUp=<span style="color:#ae81ff">0</span>)
+<span style="color:#66d9ef">val</span> newState = initialState.copy(thumbsUp=initialState.thumbsUp+<span style="color:#ae81ff">1</span>)</code></pre></div>
 <h2 id="reducers">Reducers</h2>
 
-<p>So the general idea with immutable state is, you build your new state by creating an updated copy of the old state. Let&rsquo;s formalize this:</p>
-
-<pre><code class="language-kotlin">// Reducer takes an old (immutable) state and builds a new state from it. 
-interface Reducer&lt;S&gt; {
-    fun reduce(oldState: S): S
+<p>So the big idea here is to build <code>newState</code> from <code>oldState</code>. Let&rsquo;s formalize this with the <code>Reducer</code> interface:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#75715e">// Reducer takes an old (immutable) state and builds a new state from it. 
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">Reducer</span>&lt;S&gt; {
+    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">reduce</span>(oldState: S): S
+}</code></pre></div>
+<p>Each reducer instance represents one &ldquo;action&rdquo; we received from the user. For our Android app, we have two buttons. We&rsquo;ll need actions to increment ❤️ or 👍 by 1</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AddHeart</span> :Reducer&lt;UpvoteModel&gt; {
+    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">reduce</span>(oldState: UpvoteModel) =
+        oldState.copy(hearts = oldState.hearts + <span style="color:#ae81ff">1</span>)
 }
-</code></pre>
 
-<p>So, each reducer being processed represents one &ldquo;action&rdquo; on the user side. If this was an Android app, how do we need it to behave?</p>
-
-<ul>
-<li>When the app starts, <code>UpvoteModel(hearts=0, thumbsUp=0)</code></li>
-<li>When a button is pressed, we increment ❤️ or 👍 by 1</li>
-</ul>
-
-<p>Our reducer implementations:</p>
-
-<pre><code class="language-kotlin">    class AddHeart :Reducer&lt;UpvoteModel&gt; {
-        override fun reduce(oldState: UpvoteModel) =
-            oldState.copy(hearts = oldState.hearts + 1)
-    }
-
-    class AddThumbsUp :Intent&lt;UpvoteModel&gt; {
-        override fun reduce(oldState: UpvoteModel) =
-            oldState.copy(thumbsUp = oldState.thumbsUp + 1)
-    }
-</code></pre>
-
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AddThumbsUp</span> :Intent&lt;UpvoteModel&gt; {
+    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">reduce</span>(oldState: UpvoteModel) =
+        oldState.copy(thumbsUp = oldState.thumbsUp + <span style="color:#ae81ff">1</span>)
+}</code></pre></div>
 <h2 id="model-store">Model Store</h2>
 
-<p>Going back to the idea of the Model Store. We&rsquo;ll want our store to process <code>Reducer</code> instances on the input side. And we&rsquo;ll need some reactive stream on the output side. Using RxJava, the following interface works nicely:</p>
-
-<pre><code class="language-kotlin">interface ModelStore&lt;S&gt; {
-    fun process(reducer: Reducer&lt;S&gt;)
-    fun modelState(): Observable&lt;S&gt;
-}
-</code></pre>
-
-<p>So, if we combine all of this together, the end goal is as follows:</p>
+<p>Let put focus back on the Model Store. We&rsquo;ll want our store to process <code>Reducer</code> instances on the input side. And we&rsquo;ll need some reactive stream on the output side. Using RxJava, the following interface works nicely:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">interface</span> <span style="color:#a6e22e">ModelStore</span>&lt;S&gt; {
+    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;)
+    <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">modelState</span>(): Observable&lt;S&gt;
+}</code></pre></div>
+<p>Let&rsquo;s combine all these ideas together, and visualize them as a marble diagram:</p>
 
 <p><img src="/img/001-model-store.gif" alt="Model Store in Action" /></p>
 
-<p>How do we implement this Model Store? Let&rsquo;s start with the <code>process(r)</code> function. The first thing we need to do is take that function call, and turn it into an <code>Observable&lt;Reducer&gt;</code>. The RxRelay library is ideal here.</p>
-
-<pre><code class="language-kotlin">val reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
-fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
-</code></pre>
-
+<p>How do we implement this? Let&rsquo;s start with the <code>process(r)</code> function. The first thing we need to do is take that function call, and turn it into an <code>Observable&lt;Reducer&gt;</code>. The RxRelay library is ideal here.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">val</span> reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
+<span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)</code></pre></div>
 <p>Once an Observer subscribes to a <code>PublishRelay</code>, it will emit all the following observed items to the subscriber. That said, we&rsquo;ll only be using this <code>reducers:PublishRelay</code> internally:</p>
-
-<pre><code class="language-kotlin">private val store = reducers
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> store = reducers
     .observeOn(AndroidSchedulers.mainThread())
-    .scan(startingState) { oldState, reducer -&gt; reducer.reduce(oldState) }
-</code></pre>
-
+    .scan(startingState) { oldState, reducer -&gt; reducer.reduce(oldState) }</code></pre></div>
 <h2 id="single-source-of-truth">Single Source of Truth</h2>
 
 <p>We are missing one important piece of the puzzle. We need our model store to be a shared, single source of truth. To get the behaviour we&rsquo;re looking for, we need to turn our store into a <code>ConnectableObservable</code>.</p>
@@ -143,51 +115,51 @@ fun process(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)
 
 <p>The <code>replay(1)</code> operator gives us this ConnectableObservable. This insures that subscribers will get the current state of our ModelStore on subscription. Then, we use <code>connect()</code> on initialization, priming our ModelStore immediately.</p>
 
-<pre><code class="language-kotlin">open class RxModelStore&lt;S&gt;(startingState: S) : ModelStore&lt;S&gt; {
+<p>Here&rsquo;s a generic <code>RxModelStore</code> implementation:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">open</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">RxModelStore</span>&lt;S&gt;(startingState: S) : ModelStore&lt;S&gt; {
 
-    /** 
-     * Gives us an Observable&lt;Reducer&gt; sourced from process(reducer)
-     */
-    private val reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
+    <span style="color:#75715e">/** 
+</span><span style="color:#75715e">     * Gives us an Observable&lt;Reducer&gt; sourced from process(reducer)
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
 
-    /** 
-     * Our shared single source of truth.
-     */
-    private val store: ConnectableObservable&lt;S&gt; = intents
+    <span style="color:#75715e">/** 
+</span><span style="color:#75715e">     * Our shared single source of truth.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> store: ConnectableObservable&lt;S&gt; = intents
         .observeOn(AndroidSchedulers.mainThread())
         .scan(startingState) { oldState, reducer -&gt; reducer(oldState) }
-        .replay(1)
+        .replay(<span style="color:#ae81ff">1</span>)
         .apply { connect() }
 
-    /**
-     * Model will receive intents to be processed via this function.
-     */
-    override fun process(reducer: Reducer&lt;S&gt;) = reducers.accept(reducer)
+    <span style="color:#75715e">/**
+</span><span style="color:#75715e">     * Model will receive intents to be processed via this function.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;) = reducers.accept(reducer)
 
-    /**
-     * Observable stream of states.
-     */
-    override fun modelState(): Observable&lt;S&gt; = store
-}
-</code></pre>
-
+    <span style="color:#75715e">/**
+</span><span style="color:#75715e">     * Observable stream of states.
+</span><span style="color:#75715e">     */</span>
+    <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">modelState</span>(): Observable&lt;S&gt; = store
+}</code></pre></div>
 <h2 id="subscribing-to-a-modelstore">Subscribing to a ModelStore</h2>
 
-<p>The next step here is to subscribe to a model store. If we go back to our upvoting app example, our subscription looks something like this:</p>
-
-<pre><code class="language-kotlin">store.modelState().subscribe { model -&gt;
+<p>The last step here is to subscribe to a model store. If we go back to our upvoting app example, your subscriptions will look something like this:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin">store.modelState().subscribe { model -&gt;
     textView.text = 
-        resources.getString( R.string.upvotes, model.hearts, model.thumbsUp )
-}
-</code></pre>
-
+        resources.getString( 
+            R.string.upvotes, 
+            model.hearts, 
+            model.thumbsUp 
+        )
+}</code></pre></div>
 <h2 id="key-benefits">Key Benefits</h2>
 
 <p>By keeping your state immutable, and processing changes from within a single thread, you can make sure race conditions won&rsquo;t become a concern.</p>
 
 <p>You can apply this idea anywhere. Be it MVVM, MVI, MVP, if you deal with shared Model State, the Model Store pattern can become handy.</p>
 
-<p>If you&rsquo;re interested in learning more, check out <a href="https://github.com/kanawish/upvote">Upvote MVI Sample App on Github</a>, from my <a href="https://speakerdeck.com/kanawish/19-mvi-droidcon-boston-slides">Simple MVI Architecture</a> talk at <a href="https://www.droidcon-boston.com">Droicon Boston 2019</a>.</p>
+<p>Interested in learning more? Check out this full <a href="https://github.com/kanawish/upvote">Upvote MVI Sample App on Github</a>, from my <a href="https://speakerdeck.com/kanawish/19-mvi-droidcon-boston-slides">Simple MVI Architecture</a> talk at Droicon Boston 2019.</p>
 
 </div>
 
