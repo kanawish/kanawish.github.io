@@ -85,7 +85,7 @@
         oldState.copy(hearts = oldState.hearts + <span style="color:#ae81ff">1</span>)
 }
 
-<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AddThumbsUp</span> :Intent&lt;UpvoteModel&gt; {
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">AddThumbsUp</span> :Reducer&lt;UpvoteModel&gt; {
     <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">reduce</span>(oldState: UpvoteModel) =
         oldState.copy(thumbsUp = oldState.thumbsUp + <span style="color:#ae81ff">1</span>)
 }</code></pre></div>
@@ -102,7 +102,7 @@
 
 <p>How do we implement this? Let&rsquo;s start with the <code>process(r)</code> function. The first thing we need to do is take that function call, and turn it into an <code>Observable&lt;Reducer&gt;</code>. The RxRelay library is ideal here.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">val</span> reducers = PublishRelay.create&lt;Reducer&lt;S&gt;&gt;()
-<span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;) = intents.accept(reducer)</code></pre></div>
+<span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;) = reducers.accept(reducer)</code></pre></div>
 <p>Once an Observer subscribes to a <code>PublishRelay</code>, it will emit all the following observed items to the subscriber. That said, we&rsquo;ll only be using this <code>reducers:PublishRelay</code> internally:</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-kotlin" data-lang="kotlin"><span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> store = reducers
     .observeOn(AndroidSchedulers.mainThread())
@@ -126,14 +126,14 @@
     <span style="color:#75715e">/** 
 </span><span style="color:#75715e">     * Our shared single source of truth.
 </span><span style="color:#75715e">     */</span>
-    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> store: ConnectableObservable&lt;S&gt; = intents
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">val</span> store: ConnectableObservable&lt;S&gt; = reducers
         .observeOn(AndroidSchedulers.mainThread())
         .scan(startingState) { oldState, reducer -&gt; reducer(oldState) }
         .replay(<span style="color:#ae81ff">1</span>)
         .apply { connect() }
 
     <span style="color:#75715e">/**
-</span><span style="color:#75715e">     * Model will receive intents to be processed via this function.
+</span><span style="color:#75715e">     * Model will receive reducers to be processed via this function.
 </span><span style="color:#75715e">     */</span>
     <span style="color:#66d9ef">override</span> <span style="color:#66d9ef">fun</span> <span style="color:#a6e22e">process</span>(reducer: Reducer&lt;S&gt;) = reducers.accept(reducer)
 
